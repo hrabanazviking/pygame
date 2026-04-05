@@ -112,10 +112,11 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 - [x] `__init__.py` copyreg.pickle — `# type: ignore[arg-type]` on old-style API calls
 - [ ] Broader type annotation pass on public functions — deferred to later phase
 
-**1D — Memory Management Audit**
-- [ ] SDL2 resource leak check — all SDL_CreateX matched with SDL_DestroyX
-- [ ] GIL handling in threading contexts
-- [ ] Refcount correctness in CPython extension code
+**1D — Memory Management Audit** ✓ COMPLETE
+- [x] SDL2 resource leak check — 4 bugs fixed (display.c quit/error paths; transform.c rotozoom)
+- [x] GIL handling — BEGIN/END pairs verified balanced in all key files
+- [x] Refcount correctness — surface.c blits and subsurface chain verified correct
+- [x] FreeType lifecycle — _PGFT_Init/_PGFT_Quit ref-counting verified clean
 
 **1E — Thread Safety**
 - [ ] Identify all non-thread-safe paths
@@ -417,7 +418,7 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 | 1A Static Analysis | **COMPLETE** | mypy 1.20.0 + pylint 4.0.5 run; findings in docs/AUDIT_REPORT.md |
 | 1B C Safety Audit | **COMPLETE** | 7 bugs fixed across display/surface/image/font; see AUDIT_REPORT.md |
 | 1C Python Layer Safety | **COMPLETE** | sprite.py Generic fix, sysfont imports, type annotations, copyreg ignore |
-| 1D Memory Management | NOT STARTED | |
+| 1D Memory Management | **COMPLETE** | 4 SDL resource bugs fixed (display.c×3, transform.c×1); GIL/refcount verified |
 | 1E Thread Safety | NOT STARTED | |
 | 1F Self-Healing Patterns | NOT STARTED | |
 | 2A Platform Abstraction | NOT STARTED | |
@@ -466,9 +467,17 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 
 ## Immediate Next Steps (Phase 1C)
 
-**Phase 0 COMPLETE. Phase 1A+1B+1C COMPLETE. HEAD: be478245**
+**Phase 0 COMPLETE. Phase 1A–1D COMPLETE. HEAD: 0bf0150b**
 
-1. **Phase 1D — Memory Management:**
+1. **Phase 1E — Thread Safety:**
+   - Verify mutex coverage completeness in event.c
+   - Surface lock/unlock safety from non-main threads
+
+2. **Phase 1F — Self-Healing Patterns:**
+   - SDL_Init failure recovery paths
+   - Error context enrichment
+
+3. **Former Phase 1D items (done):**
    - Audit `SDL_DestroyTexture` / `SDL_DestroyRenderer` paths in `display.c`
    - FreeType face/cache lifecycle in `font.c` and `_freetype.c`
 
