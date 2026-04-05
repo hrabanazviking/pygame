@@ -267,6 +267,8 @@ See docs/licenses for licenses of dependencies.
 
 ---
 
-![https://raw.githubusercontent.com/hrabanazviking/pygame/refs/heads/main/IMG_0407.jpeg](https://raw.githubusercontent.com/hrabanazviking/pygame/refs/heads/main/IMG_0407.jpeg)
+image:: https://raw.githubusercontent.com/hrabanazviking/pygame/refs/heads/main/IMG_0407.jpeg
+  :alt: RuneForgeAI
+  :target: https://github.com/hrabanazviking/RuneForgeAI
 
 ---
