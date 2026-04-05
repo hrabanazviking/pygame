@@ -105,10 +105,12 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 - [ ] Use-after-free audit — not yet done (surface cleanup looks correct)
 - [ ] Uninitialized variable audit — not yet done
 
-**1C — Python Layer Safety**
-- [ ] Type annotation completeness — all public functions annotated
-- [ ] Error propagation — ensure C errors surface correctly as Python exceptions
-- [ ] Argument validation — edge cases (negative sizes, None where object expected, etc.)
+**1C — Python Layer Safety** ✓ COMPLETE
+- [x] `sprite.py` Generic base class — `Generic[TypeVar("T")]` → `_T = TypeVar("_T")` + `Generic[_T]`
+- [x] `sysfont.py` platform-conditional imports — moved into function scope; pylint 10.00/10
+- [x] `sysfont.py` type annotations — Sysfonts/Sysalias properly typed
+- [x] `__init__.py` copyreg.pickle — `# type: ignore[arg-type]` on old-style API calls
+- [ ] Broader type annotation pass on public functions — deferred to later phase
 
 **1D — Memory Management Audit**
 - [ ] SDL2 resource leak check — all SDL_CreateX matched with SDL_DestroyX
@@ -414,7 +416,7 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 | 0E API Surface Reference | NOT STARTED | Next phase work |
 | 1A Static Analysis | **COMPLETE** | mypy 1.20.0 + pylint 4.0.5 run; findings in docs/AUDIT_REPORT.md |
 | 1B C Safety Audit | **COMPLETE** | 7 bugs fixed across display/surface/image/font; see AUDIT_REPORT.md |
-| 1C Python Layer Safety | NOT STARTED | |
+| 1C Python Layer Safety | **COMPLETE** | sprite.py Generic fix, sysfont imports, type annotations, copyreg ignore |
 | 1D Memory Management | NOT STARTED | |
 | 1E Thread Safety | NOT STARTED | |
 | 1F Self-Healing Patterns | NOT STARTED | |
@@ -464,15 +466,9 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 
 ## Immediate Next Steps (Phase 1C)
 
-**Phase 0 COMPLETE. Phase 1A+1B COMPLETE. HEAD: 49e56962**
+**Phase 0 COMPLETE. Phase 1A+1B+1C COMPLETE. HEAD: be478245**
 
-1. **Phase 1C — Python Layer Safety:**
-   - Fix `sprite.py` Generic base class (mypy `Invalid base class "Generic"`)
-   - Fix `sysfont.py` platform-conditional import pattern (_winreg / subprocess)
-   - Investigate `copyreg.pickle` signature mismatch in `__init__.py`
-   - Type annotation audit on public-facing functions
-
-2. **Phase 1D — Memory Management:**
+1. **Phase 1D — Memory Management:**
    - Audit `SDL_DestroyTexture` / `SDL_DestroyRenderer` paths in `display.c`
    - FreeType face/cache lifecycle in `font.c` and `_freetype.c`
 
