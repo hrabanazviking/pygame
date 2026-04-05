@@ -465,27 +465,16 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 
 ---
 
-## Immediate Next Steps (Phase 1C)
+## Immediate Next Steps (Phase 1E)
 
-**Phase 0 COMPLETE. Phase 1A–1D COMPLETE. HEAD: 0bf0150b**
+**Phase 0 COMPLETE. Phase 1A–1D COMPLETE. HEAD: 1bc45dfe**
 
 1. **Phase 1E — Thread Safety:**
    - Verify mutex coverage completeness in event.c
    - Surface lock/unlock safety from non-main threads
+   - Display state access from non-main threads
 
 2. **Phase 1F — Self-Healing Patterns:**
-   - SDL_Init failure recovery paths
-   - Error context enrichment
-
-3. **Former Phase 1D items (done):**
-   - Audit `SDL_DestroyTexture` / `SDL_DestroyRenderer` paths in `display.c`
-   - FreeType face/cache lifecycle in `font.c` and `_freetype.c`
-
-3. **Phase 1E — Thread Safety:**
-   - Event filter mutex coverage verification
-   - Surface lock/unlock from non-main thread safety
-
-4. **Phase 1F — Self-Healing Patterns:**
    - SDL_Init failure recovery paths
    - Error context enrichment (SDL_GetError propagation)
 
