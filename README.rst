@@ -1,4 +1,4 @@
-.. image:: https://raw.githubusercontent.com/pygame/pygame/main/docs/reST/_static/pygame_logo.svg
+.. image:: https://raw.githubusercontent.com/hrabanazviking/pygame/refs/heads/main/pygame_viking_edition_logo1.png
   :alt: pygame
   :target: https://www.pygame.org/
 
