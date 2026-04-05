@@ -190,6 +190,15 @@ pg_display_quit(PyObject *self, PyObject *_null)
     pg_mod_autoquit(IMPPREFIX "event");
     pg_mod_autoquit(IMPPREFIX "time");
 
+    if (pg_texture) {
+        SDL_DestroyTexture(pg_texture);
+        pg_texture = NULL;
+    }
+    if (pg_renderer) {
+        SDL_DestroyRenderer(pg_renderer);
+        pg_renderer = NULL;
+    }
+
     if (SDL_WasInit(SDL_INIT_VIDEO)) {
         SDL_QuitSubSystem(SDL_INIT_VIDEO);
     }
@@ -1253,6 +1262,13 @@ pg_set_mode(PyObject *self, PyObject *arg, PyObject *kwds)
                     pg_texture = SDL_CreateTexture(
                         pg_renderer, SDL_PIXELFORMAT_ARGB8888,
                         SDL_TEXTUREACCESS_STREAMING, w, h);
+                    if (!pg_texture) {
+                        _display_state_cleanup(state);
+                        SDL_DestroyRenderer(pg_renderer);
+                        pg_renderer = NULL;
+                        PyErr_SetString(pgExc_SDLError, SDL_GetError());
+                        goto DESTROY_WINDOW;
+                    }
                 }
                 surf = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32,
                                             0xff << 16, 0xff << 8, 0xff, 0);
@@ -1336,6 +1352,14 @@ pg_set_mode(PyObject *self, PyObject *arg, PyObject *kwds)
 
 DESTROY_WINDOW:
 
+    if (pg_texture) {
+        SDL_DestroyTexture(pg_texture);
+        pg_texture = NULL;
+    }
+    if (pg_renderer) {
+        SDL_DestroyRenderer(pg_renderer);
+        pg_renderer = NULL;
+    }
     if (win == pg_GetDefaultWindow())
         pg_SetDefaultWindow(NULL);
     else if (win)
