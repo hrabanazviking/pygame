@@ -1,14 +1,14 @@
 # pygame Viking Edition — Phase 1 Audit Report
 
 **Last Updated:** 2026-04-05  
-**Phase:** 1A (Static Analysis) + 1B (C Safety Audit)  
-**Status:** PHASE 1B COMPLETE — all 9 priority C files audited
+**Phase:** 1A + 1B (C Safety) + 1C (Python Safety)  
+**Status:** PHASES 1A–1C COMPLETE
 
 ---
 
 ## Summary
 
-Phase 1 audit identified and fixed **7 confirmed C-level bugs** (null pointer dereferences, copy-paste error, silent TTF failure) plus documented **4 Python-layer findings** from static analysis tools. No critical security vulnerabilities found. The codebase is generally solid — bugs are edge cases in error paths rather than normal execution.
+Phase 1 audit identified and fixed **7 confirmed C-level bugs** (null pointer dereferences, copy-paste error, silent TTF failure) and **3 Python-layer bugs** (invalid Generic TypeVar, platform-conditional imports, missing type annotations). mypy: 8 → 4 errors (remaining 4 are unavoidable star-import false positives). pylint: 9.96 → 10.00/10. No critical security vulnerabilities found.
 
 ---
 
@@ -210,32 +210,25 @@ return 0;
 
 ## Static Analysis Findings (Python)
 
-### mypy results
+### mypy results (after Phase 1C fixes)
 
-| File | Line | Issue | Severity |
+| File | Line | Issue | Status |
 |---|---|---|---|
-| `sysfont.py` | 36 | `Sysfonts` dict lacks type annotation — `dict[str, ...]` | Info |
-| `sprite.py` | 363 | `Generic` as base class is invalid under mypy strict checking | Low |
-| `__init__.py` | 109, 113, 339 | `ver`, `get_sdl_version` not defined — false positives from star imports (`from pygame.version import *`, `from pygame.base import *`) | False positive |
-| `__init__.py` | 320, 333 | `copyreg.pickle` third argument type mismatch — constructor signature doesn't exactly match mypy's expected signature | Low |
+| `sysfont.py` | 36 | `Sysfonts` dict lacks type annotation | **FIXED** — `Dict[str, Dict[Tuple[bool, bool], str]]` added |
+| `sprite.py` | 363 | `Generic[TypeVar("T")]` invalid base class | **FIXED** — `_T = TypeVar("_T")` + `Generic[_T]` |
+| `__init__.py` | 109, 113, 339 | `ver`, `get_sdl_version` not defined | False positive (unavoidable star imports from C exts) |
+| `__init__.py` | 320, 333 | `copyreg.pickle` third arg type mismatch | **FIXED** — `# type: ignore[arg-type]` with explanation |
 
-**Notes:**
-- The `__init__.py` "not defined" errors are unavoidable with star imports and are not real bugs.
-- The `copyreg.pickle` signature mismatch is a mypy strictness issue, not a runtime bug — the code works correctly.
-- `sprite.py Generic` issue warrants investigation in Phase 1C.
+**Final state:** 8 errors → 4 (all remaining are star-import false positives, not real bugs)
 
-### pylint results (overall score: 9.96/10)
+### pylint results (after Phase 1C fixes)
 
-| File | Line | Code | Issue | Severity |
-|---|---|---|---|---|
-| `sysfont.py` | 67 | E0601 | `_winreg` used before assignment (platform-conditional import) | Low |
-| `sysfont.py` | 212 | E0606 | `subprocess` possibly used before assignment (platform-conditional import) | Low |
+| File | Code | Issue | Status |
+|---|---|---|---|
+| `sysfont.py` | E0601 | `_winreg` used before assignment | **FIXED** — moved import inside `initsysfonts_win32()` |
+| `sysfont.py` | E0606 | `subprocess` possibly used before assignment | **FIXED** — moved import inside `initsysfonts_unix()` |
 
-**Notes:**
-- Both are platform-conditional imports inside `if os.name == "nt"` / `if sys.platform != "emscripten"` guards.
-- `_winreg` in `initsysfonts_win32()` is only called on Windows where the import runs — safe at runtime.
-- `subprocess` in `initsysfonts_unix()` has an early-return guard for emscripten — safe at runtime.
-- Pattern is fragile if someone calls these functions outside their intended context. Low priority fix: move imports into function scope or add `# pylint: disable` with explanation.
+**Final score: 10.00/10** (was 9.96/10)
 
 ---
 
@@ -264,10 +257,8 @@ All 9 priority C files audited. 7 bugs found and fixed. Remaining lower-priority
 - `src_c/scrap.c` — clipboard path, platform-specific
 - `src_c/key.c`, `src_c/mouse.c`, `src_c/joystick.c` — input state handling
 
-### Phase 1C (Python Layer Safety)
-- `sprite.py` Generic base class issue (mypy)
-- `sysfont.py` platform-conditional import pattern
-- `__init__.py` copyreg.pickle signature
+### Phase 1C (Python Layer Safety) — COMPLETE
+All items fixed. See mypy/pylint results above.
 
 ### Phase 1D (Memory Management)
 - SDL_FreeSurface audit across all modules
