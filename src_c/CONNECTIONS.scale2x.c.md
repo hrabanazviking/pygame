@@ -1,0 +1,11 @@
+# Connections for `scale2x.c`
+
+- **Source file:** `src_c/scale2x.c`
+- **Upstream dependencies:**
+  - List modules/files this source depends on.
+- **Downstream dependents:**
+  - List modules/files that import or call into this source.
+- **Runtime/data flow notes:**
+  - Note important call paths and integration boundaries.
+- **Cross-cutting concerns:**
+  - Performance/security/platform coupling notes.
