@@ -1,14 +1,14 @@
 # pygame Viking Edition — Phase 1 Audit Report
 
 **Last Updated:** 2026-04-05  
-**Phase:** 1A + 1B (C Safety) + 1C (Python Safety)  
-**Status:** PHASES 1A–1C COMPLETE
+**Phase:** 1A + 1B (C Safety) + 1C (Python Safety) + 1D (Memory Management)  
+**Status:** PHASES 1A–1D COMPLETE
 
 ---
 
 ## Summary
 
-Phase 1 audit identified and fixed **7 confirmed C-level bugs** (null pointer dereferences, copy-paste error, silent TTF failure) and **3 Python-layer bugs** (invalid Generic TypeVar, platform-conditional imports, missing type annotations). mypy: 8 → 4 errors (remaining 4 are unavoidable star-import false positives). pylint: 9.96 → 10.00/10. No critical security vulnerabilities found.
+Phase 1 audit identified and fixed **11 confirmed bugs**: 7 C-level null pointer / copy-paste bugs (Phase 1B), 4 SDL resource management bugs (Phase 1D), and 3 Python-layer bugs (Phase 1C). mypy: 8 → 4 errors (remaining 4 are star-import false positives). pylint: 9.96 → 10.00/10. GIL BEGIN/END pairs verified balanced across all key files. No critical security vulnerabilities.
 
 ---
 
@@ -208,6 +208,50 @@ return 0;
 
 ---
 
+### BUG-08 — display.c: `pg_display_quit` leaves dangling `pg_texture`/`pg_renderer` after SDL_QuitSubSystem
+**File:** `src_c/display.c` ~line 193  
+**Severity:** High — use-after-free / dangling pointer  
+**Type:** Resource lifecycle  
+
+`pg_texture` and `pg_renderer` are module-level globals. `pg_display_quit` called `SDL_QuitSubSystem(SDL_INIT_VIDEO)` without first destroying them. SDL internally freed their memory, but the pointers remained non-NULL. Any subsequent code checking `if (pg_renderer != NULL)` (e.g., `pg_get_surface`) would operate on freed memory. Fixed by destroying and NULLing both before `SDL_QuitSubSystem`.
+
+**Status:** FIXED
+
+---
+
+### BUG-09 — display.c: `SDL_CreateTexture` return not checked in `pg_set_mode`
+**File:** `src_c/display.c` ~line 1253  
+**Severity:** High — crash on low-memory or driver error  
+**Type:** Unchecked return value  
+
+`pg_texture = SDL_CreateTexture(...)` had no NULL check. Failure (OOM, driver error) would leave `pg_texture = NULL` and continue execution. Later use of the NULL texture for rendering would crash. Fixed with NULL check, renderer cleanup, and `goto DESTROY_WINDOW`.
+
+**Status:** FIXED
+
+---
+
+### BUG-10 — display.c: `DESTROY_WINDOW` error path leaks renderer and texture
+**File:** `src_c/display.c` ~line 1337  
+**Severity:** Medium — SDL resource leak  
+**Type:** Error path resource leak  
+
+When any error path reached `DESTROY_WINDOW` after a renderer and/or texture had been created in the current `pg_set_mode` call, those resources were not destroyed before the window. Fixed by destroying and NULLing `pg_texture` and `pg_renderer` at the top of the `DESTROY_WINDOW` block.
+
+**Status:** FIXED
+
+---
+
+### BUG-11 — transform.c: `rotozoom` surf32 unchecked after `SDL_CreateRGBSurface`
+**File:** `src_c/transform.c` ~line 982  
+**Severity:** High — crash on memory allocation failure  
+**Type:** Unchecked return value / NULL dereference  
+
+`SDL_CreateRGBSurface` for the 32bpp conversion buffer in the rotozoom path had no NULL check. If it failed, `SDL_BlitSurface(surf, NULL, NULL, NULL)` and `rotozoomSurface(NULL, ...)` would immediately crash. Fixed with NULL guard and proper error return.
+
+**Status:** FIXED
+
+---
+
 ## Static Analysis Findings (Python)
 
 ### mypy results (after Phase 1C fixes)
@@ -260,10 +304,13 @@ All 9 priority C files audited. 7 bugs found and fixed. Remaining lower-priority
 ### Phase 1C (Python Layer Safety) — COMPLETE
 All items fixed. See mypy/pylint results above.
 
-### Phase 1D (Memory Management)
-- SDL_FreeSurface audit across all modules
-- SDL_DestroyTexture / SDL_DestroyRenderer in display.c cleanup
-- FreeType face/cache lifecycle in font.c
+### Phase 1D (Memory Management) — COMPLETE
+**4 bugs fixed** in display.c and transform.c (see BUG-08 through BUG-11 below).
+- FreeType lifecycle verified clean (`_PGFT_Init`/`_PGFT_Quit` reference-counted correctly)
+- SDL surface create/free balance verified: 44 creates / 45 frees (surplus from error paths — correct)
+- GIL BEGIN/END pairs verified balanced in all key files
+- Refcount patterns in surface.c `blits` verified correct (null-after-decref pattern prevents double-deref)
+- `pixelarray_methods.c`, `ft_render.c` surface allocations all properly guarded
 
 ### Phase 1E (Thread Safety)
 - Verify mutex coverage in event.c
