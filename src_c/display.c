@@ -297,11 +297,11 @@ pg_vidinfo_getattr(PyObject *self, char *name)
     else if (!strcmp(name, "blit_hw_A"))
         return PyLong_FromLong(info->blit_hw_A);
     else if (!strcmp(name, "blit_sw"))
-        return PyLong_FromLong(info->blit_hw);
+        return PyLong_FromLong(info->blit_sw);
     else if (!strcmp(name, "blit_sw_CC"))
-        return PyLong_FromLong(info->blit_hw_CC);
+        return PyLong_FromLong(info->blit_sw_CC);
     else if (!strcmp(name, "blit_sw_A"))
-        return PyLong_FromLong(info->blit_hw_A);
+        return PyLong_FromLong(info->blit_sw_A);
     else if (!strcmp(name, "blit_fill"))
         return PyLong_FromLong(info->blit_fill);
     else if (!strcmp(name, "video_mem"))
@@ -593,7 +593,7 @@ pg_get_surface(PyObject *self, PyObject *_null)
     else {
         SDL_Surface *sdl_surface = SDL_GetWindowSurface(win);
         pgSurfaceObject *old_surface = pg_GetDefaultWindowSurface();
-        if (sdl_surface != old_surface->surf) {
+        if (old_surface == NULL || sdl_surface != old_surface->surf) {
             pgSurfaceObject *new_surface =
                 (pgSurfaceObject *)pgSurface_New2(sdl_surface, SDL_FALSE);
             if (!new_surface)
@@ -716,6 +716,9 @@ pg_ResizeEventWatch(void *userdata, SDL_Event *event)
         if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
             GL_glViewport_Func p_glViewport =
                 (GL_glViewport_Func)SDL_GL_GetProcAddress("glViewport");
+            if (!p_glViewport) {
+                return 0;
+            }
             int wnew = event->window.data1;
             int hnew = event->window.data2;
             SDL_GL_MakeCurrent(pygame_window, state->gl_context);
@@ -743,7 +746,7 @@ pg_ResizeEventWatch(void *userdata, SDL_Event *event)
         if (window == pygame_window) {
             SDL_Surface *sdl_surface = SDL_GetWindowSurface(window);
             pgSurfaceObject *old_surface = pg_GetDefaultWindowSurface();
-            if (sdl_surface != old_surface->surf) {
+            if (old_surface != NULL && sdl_surface != old_surface->surf) {
                 old_surface->surf = sdl_surface;
             }
         }
