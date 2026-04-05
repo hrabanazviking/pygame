@@ -264,3 +264,9 @@ See docs/licenses for licenses of dependencies.
 .. _Compilation wiki page: https://www.pygame.org/wiki/Compilation
 .. _docs page: https://www.pygame.org/docs/
 .. _GNU LGPL version 2.1: https://www.gnu.org/copyleft/lesser.html
+
+---
+
+![https://raw.githubusercontent.com/hrabanazviking/pygame/refs/heads/main/IMG_0407.jpeg](https://raw.githubusercontent.com/hrabanazviking/pygame/refs/heads/main/IMG_0407.jpeg)
+
+---
