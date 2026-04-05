@@ -2,13 +2,13 @@
 
 **Last Updated:** 2026-04-05  
 **Phase:** 1A (Static Analysis) + 1B (C Safety Audit)  
-**Status:** IN PROGRESS — display.c, image.c, surface.c complete; event.c clean; mixer.c clean
+**Status:** PHASE 1B COMPLETE — all 9 priority C files audited
 
 ---
 
 ## Summary
 
-Phase 1 audit identified and fixed **6 confirmed C-level bugs** (null pointer dereferences, copy-paste error) plus documented **4 Python-layer findings** from static analysis tools. No critical security vulnerabilities found. The codebase is generally solid — bugs are edge cases in error paths rather than normal execution.
+Phase 1 audit identified and fixed **7 confirmed C-level bugs** (null pointer dereferences, copy-paste error, silent TTF failure) plus documented **4 Python-layer findings** from static analysis tools. No critical security vulnerabilities found. The codebase is generally solid — bugs are edge cases in error paths rather than normal execution.
 
 ---
 
@@ -178,6 +178,36 @@ if (pgSurface_SetSurface(self, s, owner)) {
 
 ---
 
+### BUG-07 — font.c: `font_init` silent failure if `TTF_OpenFontRW` returns NULL
+**File:** `src_c/font.c` ~line 806  
+**Severity:** High — Font object created with NULL font pointer, crashes on first use  
+**Type:** Missing error check  
+
+`TTF_OpenFontRW` can return NULL for corrupt/invalid font files, or in extremely rare driver conditions. The code assigned NULL to `self->font` and returned 0 (success). Subsequent calls to any font method (`get_height`, `render`, etc.) would call `TTF_FontHeight(NULL)` and similar — undefined behavior leading to a crash.
+
+```c
+// BEFORE (silent failure):
+font = TTF_OpenFontRW(rw, 1, fontsize);
+Py_DECREF(obj);
+self->font = font;  // silently stores NULL
+return 0;           // reports success even when font is NULL
+
+// AFTER (fixed):
+font = TTF_OpenFontRW(rw, 1, fontsize);
+if (font == NULL) {
+    Py_DECREF(obj);
+    PyErr_SetString(pgExc_SDLError, TTF_GetError());
+    return -1;
+}
+Py_DECREF(obj);
+self->font = font;
+return 0;
+```
+
+**Status:** FIXED
+
+---
+
 ## Static Analysis Findings (Python)
 
 ### mypy results
@@ -216,24 +246,23 @@ if (pgSurface_SetSurface(self, s, owner)) {
 | `src_c/display.c` | COMPLETE | 4 | 4 |
 | `src_c/surface.c` | COMPLETE | 1 | 1 |
 | `src_c/image.c` | COMPLETE | 1 | 1 |
+| `src_c/font.c` | COMPLETE | 1 | 1 |
 | `src_c/event.c` | COMPLETE | 0 | — |
 | `src_c/mixer.c` | COMPLETE | 0 | — |
-| `src_c/draw.c` | NOT STARTED | — | — |
-| `src_c/transform.c` | NOT STARTED | — | — |
-| `src_c/font.c` | NOT STARTED | — | — |
-| `src_c/mask.c` | NOT STARTED | — | — |
+| `src_c/draw.c` | COMPLETE | 0 | — |
+| `src_c/transform.c` | COMPLETE | 0 | — |
+| `src_c/mask.c` | COMPLETE | 0 | — |
 
 ---
 
 ## Remaining Phase 1 Work
 
-### Phase 1B (C Safety Audit — remaining files)
-- `src_c/draw.c` — integer overflow in coordinate math, buffer bounds
-- `src_c/transform.c` — scale/rotate buffer allocation checks
-- `src_c/font.c` — FreeType resource cleanup, NULL font handles
-- `src_c/mask.c` — bounds checking in bitmask operations
+### Phase 1B (C Safety Audit — COMPLETE for priority files)
+All 9 priority C files audited. 7 bugs found and fixed. Remaining lower-priority files not yet audited:
 - `src_c/rect.c` — Cohen-Sutherland edge cases
 - `src_c/color.c` — division by zero in alpha blending?
+- `src_c/scrap.c` — clipboard path, platform-specific
+- `src_c/key.c`, `src_c/mouse.c`, `src_c/joystick.c` — input state handling
 
 ### Phase 1C (Python Layer Safety)
 - `sprite.py` Generic base class issue (mypy)
