@@ -427,11 +427,11 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 
 | Phase | Status | Notes |
 |---|---|---|
-| 0A Master Architecture | NOT STARTED | |
-| 0B Per-File Structure Docs | NOT STARTED | |
-| 0C Test Coverage Map | NOT STARTED | |
-| 0D Build System Docs | NOT STARTED | |
-| 0E API Surface Reference | NOT STARTED | |
+| 0A Master Architecture | **COMPLETE** | ARCHITECTURE.md — 29 sections, all major systems with mermaid |
+| 0B Per-File Structure Docs | **COMPLETE** | 23 docs in docs/structure/ covering all C + Python modules |
+| 0C Test Coverage Map | **COMPLETE** | docs/TEST_MAP.md |
+| 0D Build System Docs | **COMPLETE** | docs/BUILD_SYSTEM.md |
+| 0E API Surface Reference | NOT STARTED | Next phase work |
 | 1A Static Analysis | NOT STARTED | |
 | 1B C Safety Audit | NOT STARTED | |
 | 1C Python Layer Safety | NOT STARTED | |
