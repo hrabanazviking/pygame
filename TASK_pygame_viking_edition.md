@@ -465,6 +465,25 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 
 ---
 
+## Phase 2 Status
+
+**Phase 2A audit + pgplatform.h header SHIPPED 2026-05-05.**
+
+Phase 2A delivered:
+- Comprehensive audit of ~150 `#ifdef` / `#if defined` directives across `src_c/*.c|h` ([docs/PHASE_2A_PLATFORM_GUARD_AUDIT_2026-05-05.md](docs/PHASE_2A_PLATFORM_GUARD_AUDIT_2026-05-05.md)).
+- Five-class taxonomy (OS family / CPU arch / SIMD / compiler / SDL feature) with the existing-pattern-density top-10 file table.
+- Five concrete findings: Windows-macro inconsistency (4 spellings of "on Windows"), missing arm64 detection, legacy `darwin` + `macintosh` aliases, opaque BUILD_STATIC + NO_PYGAME_C_API cluster.
+- pgplatform.h proposal [`src_c/include/pgplatform.h`](src_c/include/pgplatform.h) — additive header with PG_PLATFORM_WINDOWS / PG_PLATFORM_APPLE / PG_PLATFORM_LINUX / PG_PLATFORM_ANDROID / PG_PLATFORM_WEB / PG_PLATFORM_BSD / PG_PLATFORM_POSIX OS macros, PG_ARCH_X86_64 / X86_32 / ARM64 / ARM32 / PPC64 arch macros, PG_HAVE_SSE2 / AVX2 / NEON / SIMD capability macros, PG_BUILD_STATIC / EMBEDDED build-mode macros. All 0/1 binary so they compose with `&&` / `||` cleanly. Existing legacy macros (_WIN32, __APPLE__, __SSE2__) remain valid; modules opt into the new spellings on their own schedule.
+
+Phase 2A's third sub-item (runtime-vs-compile-time capability detection) is deferred to Phase 2B per the audit doc's recommendation — the strategy choice depends on which platforms pygame VE prioritizes for pre-built wheels.
+
+Five minor cleanup recommendations are flagged for human review (subtractive changes; project's additive-only convention requires explicit Volmarr approval before they land):
+1. Replace `_WIN32` / `__WIN32__` / `MS_WIN32` legacy spellings with `PG_PLATFORM_WINDOWS` (module-by-module sweep).
+2. Drop the `&& defined(darwin)` legacy alias check on `__APPLE__` branches.
+3. Remove the `#if defined(macintosh)` legacy classic-Mac branches (zero remaining users for ~15 years).
+4. Document `BUILD_STATIC` + `NO_PYGAME_C_API` intent via the new `PG_BUILD_EMBEDDED` alias.
+5. Audit + remove `_NO_MMX_FOR_X86_64` if no live consumer remains.
+
 ## Phase 1 Status
 
 **Phase 0 COMPLETE. Phase 1A–1F COMPLETE 2026-05-05. Phase 1 is fully closed.**
