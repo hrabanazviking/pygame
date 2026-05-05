@@ -465,9 +465,9 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 
 ---
 
-## Immediate Next Steps (Phase 1E + 1F)
+## Phase 1 Status
 
-**Phase 0 COMPLETE. Phase 1A–1D COMPLETE. Phase 1E COMPLETE 2026-05-05.**
+**Phase 0 COMPLETE. Phase 1A–1F COMPLETE 2026-05-05. Phase 1 is fully closed.**
 
 1. **Phase 1E — Thread Safety: ✅ CLOSED 2026-05-05.**
    - ✅ Verified mutex coverage completeness in event.c (clean — every shared-state access guarded by `PG_LOCK_EVFILTER_MUTEX`).
@@ -475,9 +475,14 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
    - ✅ Display state access from non-main threads (clean by SDL2 design — all SDL_Video calls are documented as same-thread-as-VideoInit; pygame correctly inherits).
    - Full audit findings in [docs/PHASE_1E_AUDIT_2026-05-05.md](docs/PHASE_1E_AUDIT_2026-05-05.md).
 
-2. **Phase 1F — Self-Healing Patterns:** (next slice)
-   - SDL_Init failure recovery paths
-   - Error context enrichment (SDL_GetError propagation)
+2. **Phase 1F — Self-Healing Patterns: ✅ CLOSED 2026-05-05.**
+   - ✅ SDL_Init failure recovery paths — 2 defects found and fixed:
+     - `scrap_sdl2.c:53` — SDL_Init return value was discarded entirely; now propagated through the existing 0-return contract so the caller's RAISE pattern surfaces the SDL error.
+     - `base.c:352-356` — top-level SDL_Init failure was silently swallowed; now emits a RuntimeWarning with the SDL error string so operators see the failure at startup instead of cryptic per-submodule errors later.
+   - ✅ Error context enrichment (SDL_GetError propagation) — 8 of 10 SDL init sites already used `RAISE(pgExc_SDLError, SDL_GetError())` or `PyErr_SetString(pgExc_SDLError, SDL_GetError())`; no additional enrichment needed.
+   - Full audit findings + before/after diffs in [docs/PHASE_1F_AUDIT_2026-05-05.md](docs/PHASE_1F_AUDIT_2026-05-05.md).
+
+Next phase: Phase 2 (cross-platform expansion).
 
 ---
 
