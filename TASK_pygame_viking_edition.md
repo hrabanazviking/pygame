@@ -465,16 +465,17 @@ Take the pygame library — the backbone of thousands of Python games and Raspbe
 
 ---
 
-## Immediate Next Steps (Phase 1E)
+## Immediate Next Steps (Phase 1E + 1F)
 
-**Phase 0 COMPLETE. Phase 1A–1D COMPLETE. HEAD: 1bc45dfe**
+**Phase 0 COMPLETE. Phase 1A–1D COMPLETE. Phase 1E COMPLETE 2026-05-05.**
 
-1. **Phase 1E — Thread Safety:**
-   - Verify mutex coverage completeness in event.c
-   - Surface lock/unlock safety from non-main threads
-   - Display state access from non-main threads
+1. **Phase 1E — Thread Safety: ✅ CLOSED 2026-05-05.**
+   - ✅ Verified mutex coverage completeness in event.c (clean — every shared-state access guarded by `PG_LOCK_EVFILTER_MUTEX`).
+   - ✅ Surface lock/unlock safety from non-main threads (clean — Lock/Unlock pairs balanced; multi-thread surface mutation is operator's responsibility per SDL2 inheritance).
+   - ✅ Display state access from non-main threads (clean by SDL2 design — all SDL_Video calls are documented as same-thread-as-VideoInit; pygame correctly inherits).
+   - Full audit findings in [docs/PHASE_1E_AUDIT_2026-05-05.md](docs/PHASE_1E_AUDIT_2026-05-05.md).
 
-2. **Phase 1F — Self-Healing Patterns:**
+2. **Phase 1F — Self-Healing Patterns:** (next slice)
    - SDL_Init failure recovery paths
    - Error context enrichment (SDL_GetError propagation)
 
